@@ -1,9 +1,15 @@
 from collections import defaultdict
 from fractions import Fraction
 import logging
-from typing import Any, MutableMapping
+from typing import TYPE_CHECKING, Any, MutableMapping, Union
 
 from pyrobability.experiments import Event, Experiment, get_probability
+
+if TYPE_CHECKING:
+    from pyrobability.manager import RandomVariable
+
+OutcomeType = Union[str, "RandomVariable"]
+
 
 logger = logging.getLogger(__name__)
 
@@ -53,26 +59,44 @@ class GlobalOutcomes:
             str, list[tuple[tuple[Event, ...], Fraction]]
         ] = defaultdict(list)
 
-    def _get_outcome(self, name: str):
+    def _get_outcome(self, name: OutcomeType):
         return ProbabilityNumber(outcome_name=name)
 
-    def _set_outcome(self, name: str, value: Any):
+    def _set_outcome(self, name: OutcomeType, value: Any):
         current_events = tuple(self._active_events)
+
+        from pyrobability.manager import RandomVariable  # TODO: untangle import loop
+
+        if isinstance(name, RandomVariable):
+            return self._set_outcome_random_variable(name, value)
+
         self._outcomes[name].append((current_events, value))
 
-    def __getattr__(self, name: str):
+    def _set_outcome_random_variable(self, rv: "RandomVariable", value: Any):
+        logger.info("Using random variable as an outcome")
+        if rv.experiment in self._active_experiments:
+            event = self._get_experiment_current_active_event(rv.experiment)
+            name = event.name
+            self._set_outcome(name, value)
+        else:
+            for event in rv.experiment.events.values():
+                self._active_events.add(event)
+                self._set_outcome(event.name, value)
+                self._active_events.remove(event)
+
+    def __getattr__(self, name: OutcomeType):
         return self._get_outcome(name)
 
-    def __setattr__(self, name: str, value: Any):
+    def __setattr__(self, name: OutcomeType, value: Any):
         if name.startswith("_"):  # to avoid infinite loops
             return object.__setattr__(self, name, value)
         # implict "else"
         return self._set_outcome(name, value)
 
-    def __getitem__(self, name: str):
+    def __getitem__(self, name: OutcomeType):
         return self._get_outcome(name)
 
-    def __setitem__(self, name: str, value: Any):
+    def __setitem__(self, name: OutcomeType, value: Any):
         return self._set_outcome(name, value)
 
     @property

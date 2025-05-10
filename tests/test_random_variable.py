@@ -74,3 +74,30 @@ def test_numeric_random_variable_case_and_add():
         o.hit += rv
 
     assert o.get_prob("hit") == 0.5
+
+
+def test_random_variable_outcome_name():
+    m = Manager()
+    o = m.outcomes
+
+    rv = RandomVariable(o, {"a": Fraction(1, 2), "b": Fraction(1, 2)})
+
+    o[rv] += 1
+
+    print(o._outcomes)
+    assert o.get_prob("a") == 0.5
+    assert o.get_prob("b") == 0.5
+
+
+def test_random_variable_outcome_name_case():
+    m = Manager()
+    o = m.outcomes
+
+    rv = RandomVariable(o, {"a": Fraction(1, 2), "b": Fraction(1, 2)})
+
+    with rv.event("b"):
+        o[rv] += 1
+
+    print(o._outcomes)
+    assert o.get_prob("a") == 0
+    assert o.get_prob("b") == 0.5
