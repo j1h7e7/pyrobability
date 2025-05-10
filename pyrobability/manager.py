@@ -33,6 +33,14 @@ class ProbabilityContextManager:
 
         self.outcomes._active = self._enclosing_scope
 
+    def __or__(self, other):
+        if not isinstance(other, ProbabilityContextManager):
+            raise TypeError
+
+        return ProbabilityContextManager(
+            outcomes=self.outcomes, prob=self.prob + other.prob
+        )
+
 
 class RandomVariable:
     def __init__(self, outcomes: GlobalOutcomes, events: dict[str, Fraction]):

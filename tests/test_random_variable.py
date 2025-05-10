@@ -20,3 +20,17 @@ def test_basic_random_variable():
     assert o.get_prob("e1") == 0.5
     assert o.get_prob("e2") == 0.25
     assert o.get_prob("e3") == 0.25
+
+
+def test_random_variable_or():
+    m = Manager()
+    o = m.outcomes
+
+    rv = RandomVariable(
+        o, {"e1": Fraction(1, 2), "e2": Fraction(1, 4), "e3": Fraction(1 / 4)}
+    )
+
+    with rv.event("e1") | rv.event("e2"):
+        o.hit += 1
+
+    assert o.get_prob("hit") == 0.75
