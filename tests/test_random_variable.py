@@ -1,4 +1,5 @@
 from fractions import Fraction
+
 from pyrobability.manager import Manager, NumericRandomVariable, RandomVariable
 
 
@@ -36,7 +37,7 @@ def test_random_variable_or():
     assert o.get_prob("hit") == 0.75
 
 
-def test_numeric_random_variable():
+def test_numeric_random_variable_add():
     m = Manager()
     o = m.outcomes
 
@@ -45,3 +46,27 @@ def test_numeric_random_variable():
     o.hit += rv
 
     assert o.get_prob("hit") == 1.5
+
+
+def test_numeric_random_variable_case():
+    m = Manager()
+    o = m.outcomes
+
+    rv = NumericRandomVariable(o, {1: Fraction(1, 2), 2: Fraction(1, 2)})
+
+    with rv.event(1):
+        o.hit += 1
+
+    assert o.get_prob("hit") == 0.5
+
+
+def test_numeric_random_variable_case_and_add():
+    m = Manager()
+    o = m.outcomes
+
+    rv = NumericRandomVariable(o, {1: Fraction(1, 2), 100: Fraction(1, 2)})
+
+    with rv.event(1):
+        o.hit += rv
+
+    assert o.get_prob("hit") == 0.5

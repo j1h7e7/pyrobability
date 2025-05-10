@@ -1,5 +1,6 @@
 from fractions import Fraction
 import logging
+from typing import Optional
 from pyrobability.outcomes import GlobalOutcomes, ProbabilityNumber
 from pyrobability.types import EventNameType
 
@@ -21,10 +22,17 @@ class Manager:
 
 
 class ProbabilityContextManager:
-    def __init__(self, outcomes: GlobalOutcomes, prob: Fraction, name: EventNameType):
+    def __init__(
+        self,
+        outcomes: GlobalOutcomes,
+        prob: Fraction,
+        name: EventNameType,
+        random_variable: Optional["RandomVariable"] = None,
+    ):
         self.outcomes = outcomes
         self.prob = prob
         self.name = name
+        self.random_variable = random_variable
         # TODO: should we bind the event at RV creation time, or at __enter__ time?
         # currently we do it at __enter__, which allows you to "pre-flip" coins
 
@@ -32,6 +40,8 @@ class ProbabilityContextManager:
         logger.info("Entered context")
         # save the current OutcomesLayer for later
         self._enclosing_scope = self.outcomes._active
+        if self.random_variable:
+            self.random_variable.current_event = self.name
 
         self.outcomes._active = self.outcomes._active.new_layer(
             prob=self.prob, name=self.name
@@ -39,6 +49,8 @@ class ProbabilityContextManager:
 
     def __exit__(self, _exc_type, _exc_value, _traceback):
         logger.info("Exiting context")
+        if self.random_variable:
+            self.random_variable.current_event = None
 
         # restore the outer OutcomesLayer
         self.outcomes._active = self._enclosing_scope
@@ -48,6 +60,7 @@ class ProbabilityContextManager:
             raise TypeError
 
         # for now, just add the probabilities
+        # TODO: make this add both to the current layer
         return ProbabilityContextManager(
             outcomes=self.outcomes, prob=self.prob + other.prob, name=""
         )
@@ -58,10 +71,14 @@ class RandomVariable:
         self.outcomes = outcomes
         self.events = {
             event_name: ProbabilityContextManager(
-                outcomes=outcomes, prob=prob, name=event_name
+                outcomes=outcomes,
+                prob=prob,
+                name=event_name,
+                random_variable=self,
             )
             for event_name, prob in events.items()
         }
+        self.current_event = None
 
     def event(self, name: EventNameType):
         return self.events[name]
@@ -76,6 +93,9 @@ class NumericRandomVariable(RandomVariable):
     def __radd__(self, other):
         if not isinstance(other, ProbabilityNumber):
             raise TypeError
+
+        if self.current_event is not None:
+            return self.current_event + other
 
         outcomes_layer = other.outcomes_layer
         for event_name, event in self.events.items():
