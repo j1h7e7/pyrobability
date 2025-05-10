@@ -7,6 +7,10 @@ logger = logging.getLogger(__name__)
 
 
 class Manager:
+    """
+    Interface for easier instantiation of RandomVariables
+    """
+
     def __init__(self):
         self.outcomes = GlobalOutcomes()
 
@@ -26,6 +30,7 @@ class ProbabilityContextManager:
 
     def __enter__(self):
         logger.info("Entered context")
+        # save the current OutcomesLayer for later
         self._enclosing_scope = self.outcomes._active
 
         self.outcomes._active = self.outcomes._active.new_layer(
@@ -35,12 +40,14 @@ class ProbabilityContextManager:
     def __exit__(self, _exc_type, _exc_value, _traceback):
         logger.info("Exiting context")
 
+        # restore the outer OutcomesLayer
         self.outcomes._active = self._enclosing_scope
 
     def __or__(self, other):
         if not isinstance(other, ProbabilityContextManager):
             raise TypeError
 
+        # for now, just add the probabilities
         return ProbabilityContextManager(
             outcomes=self.outcomes, prob=self.prob + other.prob, name=""
         )
