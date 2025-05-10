@@ -13,8 +13,8 @@ def test_simple_coin_flip():
     with tails:
         o.tails += 1
 
-    assert o.probs["heads"] == 0.5
-    assert o.probs["tails"] == 0.5
+    assert o.get_prob("heads") == 0.5
+    assert o.get_prob("tails") == 0.5
 
 
 def test_nested_coin_flip():
@@ -35,13 +35,15 @@ def test_nested_coin_flip():
         with t2:
             o.TT += 1
 
-    assert o.probs["HH"] == 0.25
-    assert o.probs["HT"] == 0.25
-    assert o.probs["TH"] == 0.25
-    assert o.probs["TT"] == 0.25
+    assert o.get_prob("HH") == 0.25
+    assert o.get_prob("HT") == 0.25
+    assert o.get_prob("TH") == 0.25
+    assert o.get_prob("TT") == 0.25
 
 
-@pytest.mark.parametrize("probability", [Fraction(0.1), Fraction(0.2), Fraction(0.9)])
+@pytest.mark.parametrize(
+    "probability", [Fraction(1, 10), Fraction(1, 5), Fraction(9, 10)]
+)
 def test_biased_coin(probability):
     m = Manager()
     o = m.outcomes
@@ -53,5 +55,5 @@ def test_biased_coin(probability):
     with tails:
         o.tails += 1
 
-    assert o.probs["heads"] == probability
-    assert o.probs["tails"] == 1 - probability
+    assert o.get_prob("heads") == probability
+    assert o.get_prob("tails") == 1 - probability
