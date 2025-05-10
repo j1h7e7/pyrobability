@@ -7,10 +7,10 @@ def test_simple_coin_flip():
     m = Manager()
     o = m.outcomes
 
-    heads, tails = m.coinflip(0.5)
-    with heads:
+    flip = m.coinflip(0.5)
+    with flip.heads:
         o.heads += 1
-    with tails:
+    with flip.tails:
         o.tails += 1
 
     assert o.get_prob("heads") == 0.5
@@ -21,18 +21,18 @@ def test_nested_coin_flip():
     m = Manager()
     o = m.outcomes
 
-    h1, t1 = m.coinflip(0.5)
-    h2, t2 = m.coinflip(0.5)
+    flip1 = m.coinflip(0.5)
+    flip2 = m.coinflip(0.5)
 
-    with h1:
-        with h2:
+    with flip1.heads:
+        with flip2.heads:
             o.HH += 1
-        with t2:
+        with flip2.tails:
             o.HT += 1
-    with t1:
-        with h2:
+    with flip1.tails:
+        with flip2.heads:
             o.TH += 1
-        with t2:
+        with flip2.tails:
             o.TT += 1
 
     assert o.get_prob("HH") == 0.25
@@ -48,11 +48,10 @@ def test_biased_coin(probability):
     m = Manager()
     o = m.outcomes
 
-    heads, tails = m.coinflip(probability)
-
-    with heads:
+    flip = m.coinflip(probability)
+    with flip.heads:
         o.heads += 1
-    with tails:
+    with flip.tails:
         o.tails += 1
 
     assert o.get_prob("heads") == probability
