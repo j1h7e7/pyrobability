@@ -93,6 +93,10 @@ class GlobalOutcomes:
         for event in events:
             self._active_events.remove(event)
 
+    @property
+    def outcomes(self):
+        return self._outcomes.keys()
+
     def get_prob(self, name: str):
         outcomes = self._outcomes[name]
 
