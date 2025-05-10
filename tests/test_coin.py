@@ -1,6 +1,6 @@
 from fractions import Fraction
 import pytest
-from pyrobability.manager import Manager
+from pyrobability import Manager
 
 
 def test_simple_coin_flip():

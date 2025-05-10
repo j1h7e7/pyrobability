@@ -2,7 +2,8 @@ from fractions import Fraction
 
 import pytest
 
-from pyrobability.manager import Manager, NumericRandomVariable, RandomVariable
+from pyrobability import Manager
+from pyrobability.manager import NumericRandomVariable, RandomVariable
 
 
 def test_basic_random_variable():

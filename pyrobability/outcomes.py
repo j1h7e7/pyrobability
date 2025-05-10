@@ -82,7 +82,7 @@ class GlobalOutcomes:
         for event in events:
             self._active_events.remove(event)
 
-    def get_prob(self, name):
+    def get_prob(self, name: str):
         outcomes = self._outcomes[name]
 
         return sum(value * get_probability(events) for events, value in outcomes)

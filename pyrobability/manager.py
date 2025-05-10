@@ -7,20 +7,6 @@ from pyrobability.types import EventNameType
 logger = logging.getLogger(__name__)
 
 
-class Manager:
-    """
-    Interface for easier instantiation of RandomVariables
-    """
-
-    def __init__(self):
-        self.outcomes = GlobalOutcomes()
-
-    def coinflip(self, prob: Fraction | float | str):
-        if not isinstance(prob, Fraction):
-            prob = Fraction(prob)
-        return CoinFlip(self.outcomes, prob)
-
-
 class ProbabilityContextManager:
     def __init__(self, outcomes: GlobalOutcomes, events: list[Event]):
         self.outcomes = outcomes
