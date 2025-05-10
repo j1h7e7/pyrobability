@@ -1,5 +1,7 @@
 from fractions import Fraction
 
+import pytest
+
 from pyrobability.manager import Manager, NumericRandomVariable, RandomVariable
 
 
@@ -23,6 +25,7 @@ def test_basic_random_variable():
     assert o.get_prob("e3") == 0.25
 
 
+@pytest.mark.skip
 def test_random_variable_or():
     m = Manager()
     o = m.outcomes

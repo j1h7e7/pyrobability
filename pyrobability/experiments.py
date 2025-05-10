@@ -1,14 +1,20 @@
 from dataclasses import dataclass
 from fractions import Fraction
 import functools
+import logging
+from typing import Collection
 import uuid
 from pyrobability.types import EventNameType
 
 
-@dataclass
+logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
 class Event:
     probability: Fraction
     experiment: "Experiment"
+    name: EventNameType
 
 
 class Experiment:
@@ -19,14 +25,17 @@ class Experiment:
         self.events = {}
         for event_name, event_probability in events.items():
             self.events[event_name] = Event(
-                probability=event_probability, experiment=self
+                probability=event_probability,
+                experiment=self,
+                name=event_name,
             )
 
     def __hash__(self):
         return hash(self._experiment_id)
 
 
-def get_probability(events: list[Event]):
+def get_probability(events: Collection[Event]):
+    logger.info(f"Calculating probability of {events=}")
     experiments = [event.experiment for event in events]
 
     # check if all experiments are unique
