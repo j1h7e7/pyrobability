@@ -11,7 +11,7 @@ def test_d6():
     roll = m.dice(6)
 
     with roll.event(1):
-        o.one += 1
+        o["one"] += 1
 
     assert o.get_prob("one") == Fraction(1, 6)
 

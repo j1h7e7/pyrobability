@@ -53,16 +53,27 @@ class GlobalOutcomes:
             str, list[tuple[tuple[Event, ...], Fraction]]
         ] = defaultdict(list)
 
-    def __getattr__(self, name: str):
+    def _get_outcome(self, name: str):
         return ProbabilityNumber(outcome_name=name)
+
+    def _set_outcome(self, name: str, value: Any):
+        current_events = tuple(self._active_events)
+        self._outcomes[name].append((current_events, value))
+
+    def __getattr__(self, name: str):
+        return self._get_outcome(name)
 
     def __setattr__(self, name: str, value: Any):
         if name.startswith("_"):  # to avoid infinite loops
             return object.__setattr__(self, name, value)
         # implict "else"
+        return self._set_outcome(name, value)
 
-        current_events = tuple(self._active_events)
-        self._outcomes[name].append((current_events, value))
+    def __getitem__(self, name: str):
+        return self._get_outcome(name)
+
+    def __setitem__(self, name: str, value: Any):
+        return self._set_outcome(name, value)
 
     @property
     def _active_experiments(self):
