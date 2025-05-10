@@ -29,11 +29,24 @@ class ProbabilityContextManager:
         self.outcomes._remove_level()
 
 
-class CoinFlip:
+class RandomVariable:
+    def __init__(self, outcomes: Outcomes, events: dict[str, Fraction]):
+        self.outcomes = outcomes
+        self.events = {
+            event_name: ProbabilityContextManager(outcomes, prob)
+            for event_name, prob in events.items()
+        }
+
+    def event(self, name: str):
+        return self.events[name]
+
+
+class CoinFlip(RandomVariable):
     heads: ProbabilityContextManager
     tails: ProbabilityContextManager
 
     def __init__(self, outcomes: Outcomes, prob: Fraction):
+        super().__init__(outcomes, {"heads": prob, "tails": 1 - prob})
         self.prob = prob
-        self.heads = ProbabilityContextManager(outcomes, prob)
-        self.tails = ProbabilityContextManager(outcomes, 1 - prob)
+        self.heads = self.event("heads")
+        self.tails = self.event("tails")

@@ -44,7 +44,7 @@ def test_nested_coin_flip():
 @pytest.mark.parametrize(
     "probability", [Fraction(1, 10), Fraction(1, 5), Fraction(9, 10)]
 )
-def test_biased_coin(probability):
+def test_biased_coin_flip(probability):
     m = Manager()
     o = m.outcomes
 
