@@ -1,0 +1,1 @@
+EventNameType = str | int
