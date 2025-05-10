@@ -8,6 +8,24 @@ from pyrobability.experiments import Event, Experiment, get_probability
 logger = logging.getLogger(__name__)
 
 
+class EventSet:
+    def __init__(self):
+        self.counts: dict[Event, int] = {}
+
+    def add(self, value: Event):
+        if value not in self.counts:
+            self.counts[value] = 0
+        self.counts[value] += 1
+
+    def remove(self, value: Event):
+        self.counts[value] -= 1
+        if self.counts[value] == 0:
+            del self.counts[value]
+
+    def __iter__(self):
+        return iter(self.counts.keys())
+
+
 class ProbabilityNumber(Fraction):
     """
     Subclass of Fraction that remembers the name of the outcome
@@ -30,7 +48,7 @@ class GlobalOutcomes:
     """
 
     def __init__(self):
-        self._active_events: set[Event] = set()
+        self._active_events: EventSet = EventSet()
         self._outcomes: MutableMapping[
             str, list[tuple[tuple[Event, ...], Fraction]]
         ] = defaultdict(list)
@@ -57,10 +75,12 @@ class GlobalOutcomes:
         raise ValueError
 
     def add_events(self, events: list[Event]):
-        self._active_events |= set(events)
+        for event in events:
+            self._active_events.add(event)
 
     def remove_events(self, events: list[Event]):
-        self._active_events -= set(events)
+        for event in events:
+            self._active_events.remove(event)
 
     def get_prob(self, name):
         outcomes = self._outcomes[name]

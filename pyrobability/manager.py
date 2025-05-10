@@ -22,19 +22,19 @@ class Manager:
 
 
 class ProbabilityContextManager:
-    def __init__(self, outcomes: GlobalOutcomes, event: Event):
+    def __init__(self, outcomes: GlobalOutcomes, events: list[Event]):
         self.outcomes = outcomes
-        self.event = event
+        self.events = events
         # TODO: should we bind the event at RV creation time, or at __enter__ time?
         # currently we do it at __enter__, which allows you to "pre-flip" coins
 
     def __enter__(self):
         logger.info("Entered context")
-        self.outcomes.add_events([self.event])
+        self.outcomes.add_events(self.events)
 
     def __exit__(self, _exc_type, _exc_value, _traceback):
         logger.info("Exiting context")
-        self.outcomes.remove_events([self.event])
+        self.outcomes.remove_events(self.events)
 
 
 class RandomVariable:
@@ -42,7 +42,7 @@ class RandomVariable:
         self.experiment = Experiment(events)
         self.outcomes = outcomes
         self.events = {
-            event_name: ProbabilityContextManager(outcomes=outcomes, event=event)
+            event_name: ProbabilityContextManager(outcomes=outcomes, events=[event])
             for event_name, event in self.experiment.events.items()
         }
 
