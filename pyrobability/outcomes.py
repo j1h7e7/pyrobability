@@ -1,19 +1,18 @@
 from collections import defaultdict
 from fractions import Fraction
 import logging
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 class OutcomesLayer:
-    def __init__(self, parent: Optional["OutcomesLayer"]):
-        self.parent = parent
+    def __init__(self):
         self.probs = defaultdict(Fraction)
         self.children: list[tuple[Fraction, OutcomesLayer]] = []
 
     def new_layer(self, prob: Fraction):
-        x = OutcomesLayer(self)
+        x = OutcomesLayer()
         self.children.append((prob, x))
         return x
 
@@ -25,9 +24,9 @@ class OutcomesLayer:
         return ans
 
 
-class Outcomes:
+class GlobalOutcomes:
     def __init__(self):
-        self._root = OutcomesLayer(None)
+        self._root = OutcomesLayer()
         self._active = self._root
 
     def __getattr__(self, name: str):
@@ -38,16 +37,6 @@ class Outcomes:
             return object.__setattr__(self, name, value)
         else:
             self._active.probs[name] = value
-
-    def _add_level(self, prob: Fraction):
-        self._active = self._active.new_layer(prob)
-
-    def _remove_level(self):
-        if not self._active.parent:
-            logger.error("Tried to remove the lowest layer")
-            raise ValueError
-
-        self._active = self._active.parent
 
     def get_prob(self, name):
         return self._root.get_prob(name)

@@ -1,13 +1,13 @@
 from fractions import Fraction
 import logging
-from pyrobability.outcomes import Outcomes
+from pyrobability.outcomes import GlobalOutcomes
 
 logger = logging.getLogger(__name__)
 
 
 class Manager:
     def __init__(self):
-        self.outcomes = Outcomes()
+        self.outcomes = GlobalOutcomes()
 
     def coinflip(self, prob: Fraction | float | str):
         if not isinstance(prob, Fraction):
@@ -16,21 +16,26 @@ class Manager:
 
 
 class ProbabilityContextManager:
-    def __init__(self, outcomes: Outcomes, prob: Fraction):
+    def __init__(self, outcomes: GlobalOutcomes, prob: Fraction):
         self.outcomes = outcomes
         self.prob = prob
+        # TODO: should we bind the event at RV creation time, or at __enter__ time?
+        # currently we do it at __enter__, which allows you to "pre-flip" coins
 
     def __enter__(self):
         logger.info("Entered context")
-        self.outcomes._add_level(self.prob)
+        self._enclosing_scope = self.outcomes._active
+
+        self.outcomes._active = self.outcomes._active.new_layer(self.prob)
 
     def __exit__(self, _exc_type, _exc_value, _traceback):
         logger.info("Exiting context")
-        self.outcomes._remove_level()
+
+        self.outcomes._active = self._enclosing_scope
 
 
 class RandomVariable:
-    def __init__(self, outcomes: Outcomes, events: dict[str, Fraction]):
+    def __init__(self, outcomes: GlobalOutcomes, events: dict[str, Fraction]):
         self.outcomes = outcomes
         self.events = {
             event_name: ProbabilityContextManager(outcomes, prob)
@@ -45,7 +50,7 @@ class CoinFlip(RandomVariable):
     heads: ProbabilityContextManager
     tails: ProbabilityContextManager
 
-    def __init__(self, outcomes: Outcomes, prob: Fraction):
+    def __init__(self, outcomes: GlobalOutcomes, prob: Fraction):
         super().__init__(outcomes, {"heads": prob, "tails": 1 - prob})
         self.prob = prob
         self.heads = self.event("heads")
