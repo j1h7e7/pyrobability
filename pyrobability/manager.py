@@ -1,14 +1,14 @@
 from fractions import Fraction
 import logging
-from pyrobability.experiments import Event, Experiment
-from pyrobability.outcomes import GlobalOutcomes, ProbabilityNumber
-from pyrobability.types import EventNameType
+from pyrobability.abcs import BaseGlobalOutcomes, BaseRandomVariable
+from pyrobability.experiments import Event
+from pyrobability.types import EventNameType, ProbabilityNumber
 
 logger = logging.getLogger(__name__)
 
 
 class ProbabilityContextManager:
-    def __init__(self, outcomes: GlobalOutcomes, events: list[Event]):
+    def __init__(self, outcomes: BaseGlobalOutcomes, events: list[Event]):
         self.outcomes = outcomes
         self.events = events
         # TODO: should we bind the event at RV creation time, or at __enter__ time?
@@ -23,17 +23,20 @@ class ProbabilityContextManager:
         self.outcomes.remove_events(self.events)
 
 
-class RandomVariable:
-    def __init__(self, outcomes: GlobalOutcomes, events: dict[EventNameType, Fraction]):
-        self.experiment = Experiment(events)
+class RandomVariable(BaseRandomVariable):
+    def __init__(
+        self, outcomes: BaseGlobalOutcomes, events: dict[EventNameType, Fraction]
+    ):
         self.outcomes = outcomes
-        self.events = {
-            event_name: ProbabilityContextManager(outcomes=outcomes, events=[event])
-            for event_name, event in self.experiment.events.items()
-        }
+        super().__init__(events)
 
-    def event(self, name: EventNameType):
-        return self.events[name]
+    def _initalize_events(self, experiment):
+        return {
+            event_name: ProbabilityContextManager(
+                outcomes=self.outcomes, events=[event]
+            )
+            for event_name, event in experiment.events.items()
+        }
 
 
 class NumericRandomVariable(RandomVariable):
@@ -65,7 +68,7 @@ class CoinFlip(RandomVariable):
     heads: ProbabilityContextManager
     tails: ProbabilityContextManager
 
-    def __init__(self, outcomes: GlobalOutcomes, prob: Fraction):
+    def __init__(self, outcomes: BaseGlobalOutcomes, prob: Fraction):
         super().__init__(outcomes, {"heads": prob, "tails": 1 - prob})
         self.prob = prob
         self.heads = self.event("heads")

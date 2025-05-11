@@ -1,14 +1,11 @@
 from collections import defaultdict
 from fractions import Fraction
 import logging
-from typing import TYPE_CHECKING, Any, MutableMapping, Union
+from typing import Any, MutableMapping
 
+from pyrobability.abcs import BaseGlobalOutcomes, BaseRandomVariable, OutcomeType
 from pyrobability.experiments import Event, Experiment, get_probability
-
-if TYPE_CHECKING:
-    from pyrobability.manager import RandomVariable
-
-OutcomeType = Union[str, "RandomVariable"]
+from pyrobability.types import ProbabilityNumber
 
 
 logger = logging.getLogger(__name__)
@@ -32,28 +29,14 @@ class EventSet:
         return iter(self.counts.keys())
 
 
-class ProbabilityNumber(Fraction):
-    """
-    Subclass of Fraction that remembers the name of the outcome
-    """
-
-    outcome_name: str
-
-    # we use __new__ here since Fraction uses slots
-    def __new__(cls, *args, outcome_name: str, **kwargs):
-        self = super(ProbabilityNumber, cls).__new__(cls, *args, **kwargs)
-        self.outcome_name = outcome_name
-        return self
-
-
-class GlobalOutcomes:
+class GlobalOutcomes(BaseGlobalOutcomes):
     """
     "global" outcomes object. Used so that consumers can hold onto a single reference
-    to this object, and have the underlying OutcomesLayer changed on the fly
-    when entering a ProbabilityContextManager
+    to this object, and have the context managers handle the events
     """
 
     def __init__(self):
+        super().__init__()
         self._active_events: EventSet = EventSet()
         self._outcomes: MutableMapping[
             str, list[tuple[tuple[Event, ...], Fraction]]
@@ -65,14 +48,12 @@ class GlobalOutcomes:
     def _set_outcome(self, name: OutcomeType, value: Any):
         current_events = tuple(self._active_events)
 
-        from pyrobability.manager import RandomVariable  # TODO: untangle import loop
-
-        if isinstance(name, RandomVariable):
+        if isinstance(name, BaseRandomVariable):
             return self._set_outcome_random_variable(name, value)
 
         self._outcomes[name].append((current_events, value))
 
-    def _set_outcome_random_variable(self, rv: "RandomVariable", value: Any):
+    def _set_outcome_random_variable(self, rv: BaseRandomVariable, value: Any):
         logger.info("Using random variable as an outcome")
         if rv.experiment in self._active_experiments:
             event = self._get_experiment_current_active_event(rv.experiment)
@@ -83,21 +64,6 @@ class GlobalOutcomes:
                 self._active_events.add(event)
                 self._set_outcome(event.name, value)
                 self._active_events.remove(event)
-
-    def __getattr__(self, name: OutcomeType):
-        return self._get_outcome(name)
-
-    def __setattr__(self, name: OutcomeType, value: Any):
-        if name.startswith("_"):  # to avoid infinite loops
-            return object.__setattr__(self, name, value)
-        # implict "else"
-        return self._set_outcome(name, value)
-
-    def __getitem__(self, name: OutcomeType):
-        return self._get_outcome(name)
-
-    def __setitem__(self, name: OutcomeType, value: Any):
-        return self._set_outcome(name, value)
 
     @property
     def _active_experiments(self):
