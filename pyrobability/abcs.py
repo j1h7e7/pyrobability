@@ -1,5 +1,5 @@
 from fractions import Fraction
-from pyrobability.experiments import Event, Experiment
+from pyrobability.experiments import SimpleEvent, Experiment
 
 from abc import ABC, abstractmethod
 from typing import Any, Collection, Union
@@ -47,17 +47,19 @@ class BaseGlobalOutcomes(ABC):
         return self._set_outcome(name, value)
 
     @abstractmethod
-    def add_events(self, events: list[Event]): ...
+    def add_events(self, events: list[SimpleEvent]): ...
 
     @abstractmethod
-    def remove_events(self, events: list[Event]): ...
+    def remove_events(self, events: list[SimpleEvent]): ...
 
     @property
     @abstractmethod
     def _active_experiments(self) -> Collection[Experiment]: ...
 
     @abstractmethod
-    def _get_experiment_current_active_event(self, experiment: Experiment) -> Event: ...
+    def _get_experiment_current_active_event(
+        self, experiment: Experiment
+    ) -> SimpleEvent: ...
 
 
 class BaseProbabilityContextManager(ABC):

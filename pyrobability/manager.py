@@ -5,14 +5,14 @@ from pyrobability.abcs import (
     BaseProbabilityContextManager,
     BaseRandomVariable,
 )
-from pyrobability.experiments import Event
+from pyrobability.experiments import ExperimentOrEvent, SimpleEvent
 from pyrobability.types import EventNameType, ProbabilityNumber
 
 logger = logging.getLogger(__name__)
 
 
 class ProbabilityContextManager(BaseProbabilityContextManager):
-    def __init__(self, outcomes: BaseGlobalOutcomes, events: list[Event]):
+    def __init__(self, outcomes: BaseGlobalOutcomes, events: list[SimpleEvent]):
         super().__init__(outcomes)
         self.events = events
 
@@ -23,6 +23,15 @@ class ProbabilityContextManager(BaseProbabilityContextManager):
     def __exit__(self, exc_type, exc_value, traceback):
         logger.info("Exiting context")
         self.outcomes.remove_events(self.events)
+
+    def __or__(self, other):
+        if not isinstance(other, ProbabilityContextManager):
+            raise TypeError
+
+        return ProbabilityContextManager(
+            outcomes=self.outcomes,
+            events=[ExperimentOrEvent(events=self.events + other.events)],
+        )
 
 
 class RandomVariable(BaseRandomVariable):
