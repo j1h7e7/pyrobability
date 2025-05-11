@@ -35,7 +35,7 @@ def test_random_variable_or():
         o, {"e1": Fraction(1, 2), "e2": Fraction(1, 4), "e3": Fraction(1 / 4)}
     )
 
-    with rv.event("e1") | rv.event("e2"):
+    with rv.event("e1") | rv.event("e2"):  # type: ignore
         o.hit += 1
 
     assert o.get_prob("hit") == 0.75

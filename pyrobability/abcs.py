@@ -13,9 +13,11 @@ class BaseRandomVariable(ABC):
         self.events = self._initalize_events(self.experiment)
 
     @abstractmethod
-    def _initalize_events(self, experiment: Experiment): ...
+    def _initalize_events(
+        self, experiment: Experiment
+    ) -> dict[EventNameType, "BaseProbabilityContextManager"]: ...
 
-    def event(self, name: EventNameType):
+    def event(self, name: EventNameType) -> "BaseProbabilityContextManager":
         return self.events[name]
 
 
@@ -56,3 +58,16 @@ class BaseGlobalOutcomes(ABC):
 
     @abstractmethod
     def _get_experiment_current_active_event(self, experiment: Experiment) -> Event: ...
+
+
+class BaseProbabilityContextManager(ABC):
+    def __init__(self, outcomes: BaseGlobalOutcomes):
+        self.outcomes = outcomes
+        # TODO: should we bind the event at RV creation time, or at __enter__ time?
+        # currently we do it at __enter__, which allows you to "pre-flip" coins
+
+    @abstractmethod
+    def __enter__(self): ...
+
+    @abstractmethod
+    def __exit__(self, exc_type, exc_value, traceback): ...

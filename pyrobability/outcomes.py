@@ -12,6 +12,10 @@ logger = logging.getLogger(__name__)
 
 
 class EventSet:
+    """
+    Implementation of a multiset to allow the same event multiple times
+    """
+
     def __init__(self):
         self.counts: dict[Event, int] = {}
 

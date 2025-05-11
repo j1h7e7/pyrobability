@@ -1,24 +1,26 @@
 from fractions import Fraction
 import logging
-from pyrobability.abcs import BaseGlobalOutcomes, BaseRandomVariable
+from pyrobability.abcs import (
+    BaseGlobalOutcomes,
+    BaseProbabilityContextManager,
+    BaseRandomVariable,
+)
 from pyrobability.experiments import Event
 from pyrobability.types import EventNameType, ProbabilityNumber
 
 logger = logging.getLogger(__name__)
 
 
-class ProbabilityContextManager:
+class ProbabilityContextManager(BaseProbabilityContextManager):
     def __init__(self, outcomes: BaseGlobalOutcomes, events: list[Event]):
-        self.outcomes = outcomes
+        super().__init__(outcomes)
         self.events = events
-        # TODO: should we bind the event at RV creation time, or at __enter__ time?
-        # currently we do it at __enter__, which allows you to "pre-flip" coins
 
     def __enter__(self):
         logger.info("Entered context")
         self.outcomes.add_events(self.events)
 
-    def __exit__(self, _exc_type, _exc_value, _traceback):
+    def __exit__(self, exc_type, exc_value, traceback):
         logger.info("Exiting context")
         self.outcomes.remove_events(self.events)
 
