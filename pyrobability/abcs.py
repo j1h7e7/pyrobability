@@ -63,7 +63,7 @@ class BaseGlobalOutcomes(ABC):
 
 
 class BaseProbabilityContextManager(ABC):
-    def __init__(self, outcomes: BaseGlobalOutcomes):
+    def __init__(self, *, outcomes: BaseGlobalOutcomes):
         self.outcomes = outcomes
         # TODO: should we bind the event at RV creation time, or at __enter__ time?
         # currently we do it at __enter__, which allows you to "pre-flip" coins
@@ -73,3 +73,27 @@ class BaseProbabilityContextManager(ABC):
 
     @abstractmethod
     def __exit__(self, exc_type, exc_value, traceback): ...
+
+    def __and__(self, other):
+        if not isinstance(other, BaseProbabilityContextManager):
+            raise TypeError
+
+        return UnionProbabilityContextManager(self, other, outcomes=self.outcomes)
+
+
+class UnionProbabilityContextManager(BaseProbabilityContextManager):
+    def __init__(
+        self,
+        *others: BaseProbabilityContextManager,
+        outcomes: BaseGlobalOutcomes,
+    ):
+        super().__init__(outcomes=outcomes)
+        self.others = others
+
+    def __enter__(self):
+        for other in self.others:
+            other.__enter__()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        for other in self.others:
+            other.__exit__(exc_type, exc_value, traceback)

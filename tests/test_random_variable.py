@@ -39,6 +39,19 @@ def test_random_variable_or():
     assert o.get_prob("hit") == 0.75
 
 
+def test_random_variable_and():
+    m = Manager()
+    o = m.outcomes
+
+    rv1 = RandomVariable(o, {"a1": Fraction(1, 2), "a2": Fraction(1, 2)})
+    rv2 = RandomVariable(o, {"b1": Fraction(1, 2), "b2": Fraction(1, 2)})
+
+    with rv1.event("a1") & rv2.event("b2"):
+        o.hit += 1
+
+    assert o.get_prob("hit") == 0.25
+
+
 def test_numeric_random_variable_add():
     m = Manager()
     o = m.outcomes

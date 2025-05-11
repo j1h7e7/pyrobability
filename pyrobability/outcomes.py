@@ -4,7 +4,7 @@ import logging
 from typing import Any, MutableMapping
 
 from pyrobability.abcs import BaseGlobalOutcomes, BaseRandomVariable, OutcomeType
-from pyrobability.experiments import SimpleEvent, Experiment, get_probability
+from pyrobability.experiments import BaseEvent, Experiment, get_probability
 from pyrobability.types import ProbabilityNumber
 
 
@@ -17,14 +17,14 @@ class EventSet:
     """
 
     def __init__(self):
-        self.counts: dict[SimpleEvent, int] = {}
+        self.counts: dict[BaseEvent, int] = {}
 
-    def add(self, value: SimpleEvent):
+    def add(self, value: BaseEvent):
         if value not in self.counts:
             self.counts[value] = 0
         self.counts[value] += 1
 
-    def remove(self, value: SimpleEvent):
+    def remove(self, value: BaseEvent):
         self.counts[value] -= 1
         if self.counts[value] == 0:
             del self.counts[value]
@@ -43,7 +43,7 @@ class GlobalOutcomes(BaseGlobalOutcomes):
         super().__init__()
         self._active_events: EventSet = EventSet()
         self._outcomes: MutableMapping[
-            str, list[tuple[tuple[SimpleEvent, ...], Fraction]]
+            str, list[tuple[tuple[BaseEvent, ...], Fraction]]
         ] = defaultdict(list)
 
     def _get_outcome(self, name: OutcomeType):
@@ -79,11 +79,11 @@ class GlobalOutcomes(BaseGlobalOutcomes):
                 return event
         raise ValueError
 
-    def add_events(self, events: list[SimpleEvent]):
+    def add_events(self, events: list[BaseEvent]):
         for event in events:
             self._active_events.add(event)
 
-    def remove_events(self, events: list[SimpleEvent]):
+    def remove_events(self, events: list[BaseEvent]):
         for event in events:
             self._active_events.remove(event)
 

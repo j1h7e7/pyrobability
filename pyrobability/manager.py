@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 
 
 class ProbabilityContextManager(BaseProbabilityContextManager):
-    def __init__(self, outcomes: BaseGlobalOutcomes, events: list[SimpleEvent]):
-        super().__init__(outcomes)
+    def __init__(self, events: list[SimpleEvent], *, outcomes: BaseGlobalOutcomes):
+        super().__init__(outcomes=outcomes)
         self.events = events
 
     def __enter__(self):
